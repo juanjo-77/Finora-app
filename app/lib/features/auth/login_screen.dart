@@ -1,8 +1,11 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../dashboard/dashboard_screen.dart';
 import 'auth_service.dart';
+import 'google_button.dart';
+import 'google_sign_in_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,6 +19,25 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _cargando = false;
   bool _esRegistro = false;
   String? _error;
+  StreamSubscription? _googleSub;
+
+  @override
+  void initState() {
+    super.initState();
+    GoogleSignInService.inicializar();
+    _googleSub = GoogleSignInService.alIniciarSesion.listen((_) {
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _googleSub?.cancel();
+    super.dispose();
+  }
 
   Future<void> _enviar() async {
     setState(() { _cargando = true; _error = null; });
@@ -36,12 +58,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _proximamenteGithub() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Inicio con GitHub disponible muy pronto')),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -54,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('FINANZAS', style: AppText.eyebrow.copyWith(color: AppColors.fog)),
+                Text('FINORA', style: AppText.eyebrow.copyWith(color: AppColors.fog)),
                 const SizedBox(height: 12),
                 Text(_esRegistro ? 'Crea tu cuenta' : 'Bienvenido de vuelta',
                     style: AppText.heading.copyWith(fontSize: 40)),
@@ -109,15 +125,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                SizedBox(
-                  height: 48,
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: _proximamenteGithub,
-                    icon: const Icon(Icons.code, size: 18),
-                    label: const Text('Continuar con GitHub'),
-                  ),
-                ),
+                buildGoogleButton(),
                 const SizedBox(height: 16),
                 Center(
                   child: TextButton(

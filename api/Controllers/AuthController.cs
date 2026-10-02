@@ -4,6 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using Google.Apis.Auth;
 using FinanzasApi.Data;
 using FinanzasApi.Models;
 
@@ -45,6 +46,38 @@ public class AuthController : ControllerBase
         var usuario = await _db.Usuarios.FirstOrDefaultAsync(u => u.Email == req.Email);
         if (usuario is null || !BCrypt.Net.BCrypt.Verify(req.Password, usuario.PasswordHash))
             return Unauthorized(new { mensaje = "Correo o contraseña incorrectos." });
+
+        return Ok(new AuthResponse(GenerarToken(usuario), usuario.Email));
+    }
+
+    [HttpPost("google")]
+    public async Task<IActionResult> GoogleLogin(GoogleLoginRequest req)
+    {
+        GoogleJsonWebSignature.Payload payload;
+        try
+        {
+            payload = await GoogleJsonWebSignature.ValidateAsync(req.IdToken, new GoogleJsonWebSignature.ValidationSettings
+            {
+                Audience = new[] { _config["Google:ClientId"] }
+            });
+        }
+        catch (InvalidJwtException)
+        {
+            return Unauthorized(new { mensaje = "Token de Google inválido." });
+        }
+
+        var usuario = await _db.Usuarios.FirstOrDefaultAsync(u => u.Email == payload.Email);
+        if (usuario is null)
+        {
+            usuario = new Usuario
+            {
+                Email = payload.Email,
+                // Cuentas de Google no usan contraseña local; guardamos un hash aleatorio que nunca se usa.
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(Guid.NewGuid().ToString())
+            };
+            _db.Usuarios.Add(usuario);
+            await _db.SaveChangesAsync();
+        }
 
         return Ok(new AuthResponse(GenerarToken(usuario), usuario.Email));
     }
