@@ -1,9 +1,10 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../app_config.dart';
 
 class ApiClient {
-  static const baseUrl = 'http://localhost:5009/api';
+  static const baseUrl = AppConfig.apiBaseUrl;
   static final _storage = const FlutterSecureStorage();
 
   static Future<void> guardarToken(String token) =>

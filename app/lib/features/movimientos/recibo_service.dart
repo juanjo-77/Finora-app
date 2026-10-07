@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 import 'package:http/http.dart' as http;
+import '../../core/app_config.dart';
 
 class DatosRecibo {
   final String comercio;
@@ -24,8 +25,8 @@ class DatosRecibo {
 }
 
 class ReciboService {
-  static const _url = 'http://localhost:8001/escanear-recibo';
-  // Debe coincidir con INTERNAL_API_KEY en ai-service/.env
+  static final _url = '${AppConfig.aiBaseUrl}/escanear-recibo';
+  // Debe coincidir exactamente con INTERNAL_API_KEY en Render y en asistente_service.dart
   static const _internalKey = 'cambia-esto-por-algo-largo-y-aleatorio-123456';
 
   static Future<DatosRecibo> escanear(Uint8List imagenBytes) async {

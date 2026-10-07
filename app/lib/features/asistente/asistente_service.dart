@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../core/app_config.dart';
 import '../deudas/deuda.dart';
 import '../movimientos/movimiento.dart';
 
 class AsistenteService {
-  static const _url = 'http://localhost:8001/asistente';
-  // Debe coincidir exactamente con INTERNAL_API_KEY en ai-service/.env
+  static final _url = '${AppConfig.aiBaseUrl}/asistente';
+  // Debe coincidir exactamente con INTERNAL_API_KEY en Render y en recibo_service.dart
   static const _internalKey = 'cambia-esto-por-algo-largo-y-aleatorio-123456';
 
   static Future<String> preguntar({
