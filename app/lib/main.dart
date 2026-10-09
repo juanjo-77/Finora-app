@@ -4,6 +4,7 @@ import 'core/network/api_client.dart';
 import 'core/security/pin_service.dart';
 import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_controller.dart';
 import 'features/auth/login_screen.dart';
 import 'features/dashboard/dashboard_screen.dart';
 import 'features/seguridad/lock_screen.dart';
@@ -11,6 +12,7 @@ import 'features/seguridad/lock_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeDateFormatting('es');
+  await ThemeController.cargar();
   runApp(const FinoraApp());
 }
 
@@ -23,6 +25,15 @@ class FinoraApp extends StatelessWidget {
       title: 'Finora',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.dark,
+      builder: (context, child) {
+        return ValueListenableBuilder<bool>(
+          valueListenable: ThemeController.modoClaro,
+          builder: (context, claro, _) => ColorFiltered(
+            colorFilter: claro ? ThemeController.filtroClaro : ThemeController.filtroOscuro,
+            child: child ?? const SizedBox.shrink(),
+          ),
+        );
+      },
       home: const AppEntry(),
     );
   }

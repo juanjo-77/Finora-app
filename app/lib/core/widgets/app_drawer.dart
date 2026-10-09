@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../theme/theme_controller.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 import '../../features/movimientos/movimientos_screen.dart';
 import '../../features/deudas/deudas_screen.dart';
@@ -37,7 +38,9 @@ class _AppDrawerState extends State<AppDrawer> {
   @override
   void initState() {
     super.initState();
-    ApiClient.obtenerEmail().then((e) => setState(() => _email = e));
+    ApiClient.obtenerEmail().then((e) {
+      if (mounted) setState(() => _email = e);
+    });
   }
 
   @override
@@ -81,6 +84,22 @@ class _AppDrawerState extends State<AppDrawer> {
                   _item(context, Icons.auto_awesome, 'Asistente', DrawerRuta.asistente, const AsistenteScreen()),
                   _item(context, Icons.lock_outline, 'Seguridad', DrawerRuta.seguridad, const SeguridadScreen()),
                 ],
+              ),
+            ),
+            const Divider(color: AppColors.graphite, height: 1),
+            ValueListenableBuilder<bool>(
+              valueListenable: ThemeController.modoClaro,
+              builder: (context, claro, _) => SwitchListTile(
+                dense: true,
+                secondary: Icon(
+                  claro ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                  color: AppColors.fog,
+                  size: 18,
+                ),
+                title: Text('Modo claro', style: AppText.body.copyWith(fontSize: 14, color: AppColors.bone)),
+                value: claro,
+                activeThumbColor: AppColors.copper,
+                onChanged: ThemeController.establecer,
               ),
             ),
             const Divider(color: AppColors.graphite, height: 1),

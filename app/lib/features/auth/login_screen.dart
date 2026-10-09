@@ -18,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passCtrl = TextEditingController();
   bool _cargando = false;
   bool _esRegistro = false;
+  bool _verPassword = false;
   String? _error;
   StreamSubscription? _googleSub;
 
@@ -36,6 +37,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void dispose() {
     _googleSub?.cancel();
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
     super.dispose();
   }
 
@@ -61,82 +64,99 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 380),
-          child: Padding(
+      body: SafeArea(
+        child: Center(
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('FINORA', style: AppText.eyebrow.copyWith(color: AppColors.fog)),
-                const SizedBox(height: 12),
-                Text(_esRegistro ? 'Crea tu cuenta' : 'Bienvenido de vuelta',
-                    style: AppText.heading.copyWith(fontSize: 40)),
-                const SizedBox(height: 6),
-                Text(
-                  _esRegistro ? 'Toma el control de tu dinero.' : 'Entra para ver tu disponible real.',
-                  style: AppText.body.copyWith(fontSize: 15),
-                ),
-                const SizedBox(height: 40),
-                TextField(
-                  controller: _emailCtrl,
-                  style: AppText.body.copyWith(color: AppColors.bone, fontSize: 15, height: 1),
-                  decoration: const InputDecoration(hintText: 'Correo electrónico'),
-                ),
-                const SizedBox(height: 14),
-                TextField(
-                  controller: _passCtrl,
-                  obscureText: true,
-                  style: AppText.body.copyWith(color: AppColors.bone, fontSize: 15, height: 1),
-                  decoration: const InputDecoration(hintText: 'Contraseña'),
-                ),
-                if (_error != null) ...[
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 380),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Image.asset('assets/logo.png', height: 120),
+                  ),
+                  const SizedBox(height: 24),
+                  Text(_esRegistro ? 'Crea tu cuenta' : 'Bienvenido de vuelta',
+                      style: AppText.heading.copyWith(fontSize: 36)),
+                  const SizedBox(height: 6),
+                  Text(
+                    _esRegistro ? 'Toma el control de tu dinero.' : 'Entra para ver tu disponible real.',
+                    style: AppText.body.copyWith(fontSize: 15),
+                  ),
+                  const SizedBox(height: 32),
+                  TextField(
+                    controller: _emailCtrl,
+                    keyboardType: TextInputType.emailAddress,
+                    style: AppText.body.copyWith(color: AppColors.bone, fontSize: 15, height: 1),
+                    decoration: const InputDecoration(hintText: 'Correo electrónico'),
+                  ),
                   const SizedBox(height: 14),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: Colors.redAccent.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: Colors.redAccent.withOpacity(0.4)),
+                  TextField(
+                    controller: _passCtrl,
+                    obscureText: !_verPassword,
+                    onSubmitted: (_) => _cargando ? null : _enviar(),
+                    style: AppText.body.copyWith(color: AppColors.bone, fontSize: 15, height: 1),
+                    decoration: InputDecoration(
+                      hintText: 'Contraseña',
+                      suffixIcon: IconButton(
+                        tooltip: _verPassword ? 'Ocultar contraseña' : 'Mostrar contraseña',
+                        icon: Icon(
+                          _verPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+                          size: 20,
+                          color: AppColors.fog,
+                        ),
+                        onPressed: () => setState(() => _verPassword = !_verPassword),
+                      ),
                     ),
-                    child: Text(_error!, style: AppText.caption.copyWith(color: Colors.redAccent)),
+                  ),
+                  if (_error != null) ...[
+                    const SizedBox(height: 14),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.redAccent.withOpacity(0.08),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: Colors.redAccent.withOpacity(0.4)),
+                      ),
+                      child: Text(_error!, style: AppText.caption.copyWith(color: Colors.redAccent)),
+                    ),
+                  ],
+                  const SizedBox(height: 28),
+                  SizedBox(
+                    height: 48,
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _cargando ? null : _enviar,
+                      child: Text(_cargando ? 'Un momento...' : (_esRegistro ? 'Registrarme' : 'Entrar')),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  Row(
+                    children: [
+                      Expanded(child: Divider(color: AppColors.graphite)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: Text('o continúa con', style: AppText.caption),
+                      ),
+                      Expanded(child: Divider(color: AppColors.graphite)),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  buildGoogleButton(),
+                  const SizedBox(height: 16),
+                  Center(
+                    child: TextButton(
+                      onPressed: () => setState(() => _esRegistro = !_esRegistro),
+                      child: Text(
+                        _esRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate',
+                        style: AppText.caption.copyWith(color: AppColors.fog),
+                      ),
+                    ),
                   ),
                 ],
-                const SizedBox(height: 28),
-                SizedBox(
-                  height: 48,
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _cargando ? null : _enviar,
-                    child: Text(_cargando ? 'Un momento...' : (_esRegistro ? 'Registrarme' : 'Entrar')),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Row(
-                  children: [
-                    Expanded(child: Divider(color: AppColors.graphite)),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      child: Text('o continúa con', style: AppText.caption),
-                    ),
-                    Expanded(child: Divider(color: AppColors.graphite)),
-                  ],
-                ),
-                const SizedBox(height: 20),
-                buildGoogleButton(),
-                const SizedBox(height: 16),
-                Center(
-                  child: TextButton(
-                    onPressed: () => setState(() => _esRegistro = !_esRegistro),
-                    child: Text(
-                      _esRegistro ? '¿Ya tienes cuenta? Inicia sesión' : '¿No tienes cuenta? Regístrate',
-                      style: AppText.caption.copyWith(color: AppColors.fog),
-                    ),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
