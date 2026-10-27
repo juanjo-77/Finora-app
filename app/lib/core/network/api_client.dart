@@ -31,39 +31,49 @@ class ApiClient {
     return headers;
   }
 
+  // El servidor gratuito puede tardar en despertar, por eso el margen amplio.
+  static const _limite = Duration(seconds: 45);
+
   static Future<dynamic> get(String path) async {
-    final res = await http.get(Uri.parse('$baseUrl$path'), headers: await _headers());
+    final res = await http.get(Uri.parse('$baseUrl$path'), headers: await _headers()).timeout(_limite);
     return _procesar(res);
   }
 
   static Future<dynamic> post(String path, Map<String, dynamic> body, {bool auth = true}) async {
-    final res = await http.post(
-      Uri.parse('$baseUrl$path'),
-      headers: await _headers(auth: auth),
-      body: jsonEncode(body),
-    );
-    return _procesar(res);
+    final res = await http
+        .post(Uri.parse('$baseUrl$path'), headers: await _headers(auth: auth), body: jsonEncode(body))
+        .timeout(_limite);
+    return _procesar(res, auth: auth);
   }
 
   static Future<dynamic> put(String path, Map<String, dynamic> body) async {
-    final res = await http.put(
-      Uri.parse('$baseUrl$path'),
-      headers: await _headers(),
-      body: jsonEncode(body),
-    );
+    final res = await http
+        .put(Uri.parse('$baseUrl$path'), headers: await _headers(), body: jsonEncode(body))
+        .timeout(_limite);
     return _procesar(res);
   }
 
   static Future<void> delete(String path) async {
-    final res = await http.delete(Uri.parse('$baseUrl$path'), headers: await _headers());
-    if (res.statusCode >= 400) throw Exception('Error al eliminar');
+    final res = await http.delete(Uri.parse('$baseUrl$path'), headers: await _headers()).timeout(_limite);
+    if (res.statusCode >= 400) throw Exception('No se pudo eliminar. Intenta de nuevo.');
   }
 
-  static dynamic _procesar(http.Response res) {
-    if (res.statusCode >= 400) {
-      final cuerpo = res.body.isNotEmpty ? jsonDecode(res.body) : null;
-      throw Exception(cuerpo?['mensaje'] ?? 'Error de red (${res.statusCode})');
+  static dynamic _decodificar(String body) {
+    if (body.isEmpty) return null;
+    try {
+      return jsonDecode(body);
+    } on FormatException {
+      return null;
     }
-    return res.body.isNotEmpty ? jsonDecode(res.body) : null;
+  }
+
+  static dynamic _procesar(http.Response res, {bool auth = true}) {
+    if (res.statusCode >= 400) {
+      final cuerpo = _decodificar(res.body);
+      final mensaje = cuerpo is Map ? cuerpo['mensaje'] : null;
+      if (res.statusCode == 401 && auth) throw Exception('Tu sesión expiró. Vuelve a iniciar sesión.');
+      throw Exception(mensaje ?? 'Error de red (${res.statusCode})');
+    }
+    return _decodificar(res.body);
   }
 }

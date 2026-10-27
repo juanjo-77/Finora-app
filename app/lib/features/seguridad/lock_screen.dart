@@ -96,7 +96,7 @@ class _LockScreenState extends State<LockScreen> {
               SizedBox(
                 height: 20,
                 child: _error != null
-                    ? Text(_error!, style: AppText.caption.copyWith(color: Colors.redAccent))
+                    ? Text(_error!, style: AppText.caption.copyWith(color: AppColors.ember))
                     : null,
               ),
               const SizedBox(height: 24),

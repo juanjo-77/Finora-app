@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../dashboard/dashboard_screen.dart';
+import '../shell/main_shell.dart';
 import 'auth_service.dart';
 import 'google_button.dart';
 import 'google_sign_in_service.dart';
@@ -29,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _googleSub = GoogleSignInService.alIniciarSesion.listen((_) {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        MaterialPageRoute(builder: (_) => const MainShell()),
       );
     });
   }
@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+        MaterialPageRoute(builder: (_) => const MainShell()),
       );
     } catch (e) {
       setState(() => _error = e.toString().replaceAll('Exception: ', ''));
@@ -116,11 +116,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: Colors.redAccent.withOpacity(0.08),
+                        color: AppColors.ember.withOpacity(0.08),
                         borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: Colors.redAccent.withOpacity(0.4)),
+                        border: Border.all(color: AppColors.ember.withOpacity(0.4)),
                       ),
-                      child: Text(_error!, style: AppText.caption.copyWith(color: Colors.redAccent)),
+                      child: Text(_error!, style: AppText.caption.copyWith(color: AppColors.ember)),
                     ),
                   ],
                   const SizedBox(height: 28),

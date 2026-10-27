@@ -7,7 +7,10 @@ class MovimientosService {
     return data.map((e) => Movimiento.fromJson(e)).toList();
   }
 
-  static Future<void> crear(Movimiento m) => ApiClient.post('/movimientos', m.toJson());
+  static Future<Movimiento> crear(Movimiento m) async {
+    final data = await ApiClient.post('/movimientos', m.toJson());
+    return data is Map<String, dynamic> ? Movimiento.fromJson(data) : m;
+  }
 
   static Future<void> actualizar(int id, Movimiento m) => ApiClient.put('/movimientos/$id', m.toJson());
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../core/widgets/app_drawer.dart';
 import '../deudas/deudas_service.dart';
 import '../movimientos/movimientos_service.dart';
 import 'asistente_service.dart';
@@ -76,7 +75,6 @@ class _AsistenteScreenState extends State<AsistenteScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Asistente financiero')),
-      drawer: AppDrawer(actual: DrawerRuta.asistente),
       body: Column(
         children: [
           Expanded(
@@ -162,7 +160,7 @@ class _AsistenteScreenState extends State<AsistenteScreen> {
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text('EL DISPONIBLE REAL', style: AppText.eyebrow),
+          Text('Tu asistente financiero', style: AppText.eyebrow),
           const SizedBox(height: 8),
           Text('Pregúntame lo que quieras', style: AppText.heading.copyWith(fontSize: 28)),
           const SizedBox(height: 24),

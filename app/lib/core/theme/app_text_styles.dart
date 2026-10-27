@@ -2,31 +2,38 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'app_colors.dart';
 
+/// Unbounded para cifras y títulos; Instrument Sans para leer.
 class AppText {
-  static TextStyle display = GoogleFonts.playfairDisplay(
-    fontSize: 64, height: 1.0, letterSpacing: 0.6, color: AppColors.paperWhite,
+  static const tabular = [FontFeature.tabularFigures()];
+
+  static TextStyle display = GoogleFonts.unbounded(
+    fontSize: 40, height: 1.1, letterSpacing: -1.6, fontWeight: FontWeight.w700,
+    color: AppColors.gold, fontFeatures: tabular,
   );
-  static TextStyle heading = GoogleFonts.playfairDisplay(
-    fontSize: 44, height: 1.1, letterSpacing: 0.4, color: AppColors.paperWhite,
+  static TextStyle heading = GoogleFonts.unbounded(
+    fontSize: 24, height: 1.15, letterSpacing: -0.6, fontWeight: FontWeight.w500, color: AppColors.ivory,
   );
-  static TextStyle subheading = GoogleFonts.inter(
-    fontSize: 24, height: 1.0, letterSpacing: -0.31, fontWeight: FontWeight.w500,
-    color: AppColors.paperWhite,
+  static TextStyle subheading = GoogleFonts.unbounded(
+    fontSize: 17, height: 1.2, letterSpacing: -0.4, fontWeight: FontWeight.w500, color: AppColors.ivory,
   );
-  static TextStyle statNumber = GoogleFonts.playfairDisplay(
-    fontSize: 40, fontWeight: FontWeight.w400, color: AppColors.paperWhite,
+  static TextStyle statNumber = GoogleFonts.unbounded(
+    fontSize: 22, height: 1.1, letterSpacing: -0.5, fontWeight: FontWeight.w500,
+    color: AppColors.ivory, fontFeatures: tabular,
   );
-  static TextStyle body = GoogleFonts.inter(
-    fontSize: 16, height: 1.5, color: AppColors.fog,
+  static TextStyle amount = GoogleFonts.unbounded(
+    fontSize: 14, height: 1.1, letterSpacing: -0.3, fontWeight: FontWeight.w500,
+    color: AppColors.ivory, fontFeatures: tabular,
   );
-  static TextStyle bodyStrong = GoogleFonts.inter(
-    fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.bone,
+  static TextStyle body = GoogleFonts.instrumentSans(
+    fontSize: 15, height: 1.5, color: AppColors.sand,
   );
-  static TextStyle eyebrow = GoogleFonts.inter(
-    fontSize: 13, fontWeight: FontWeight.w600, letterSpacing: -0.26,
-    color: AppColors.copper,
+  static TextStyle bodyStrong = GoogleFonts.instrumentSans(
+    fontSize: 15, fontWeight: FontWeight.w500, color: AppColors.ivory,
   );
-  static TextStyle caption = GoogleFonts.inter(
-    fontSize: 13, color: AppColors.ash,
+  static TextStyle eyebrow = GoogleFonts.instrumentSans(
+    fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.gold,
+  );
+  static TextStyle caption = GoogleFonts.instrumentSans(
+    fontSize: 12.5, color: AppColors.dust,
   );
 }

@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/utils/currency_input_formatter.dart';
-import '../../core/widgets/app_drawer.dart';
+import '../../core/utils/feedback.dart';
 import 'inversion.dart';
 import 'inversiones_service.dart';
 
@@ -27,8 +27,12 @@ class _InversionesScreenState extends State<InversionesScreen> {
 
   Future<void> _cargar() async {
     setState(() => _cargando = true);
-    _inversiones = await InversionesService.obtenerTodas();
-    setState(() => _cargando = false);
+    try {
+      _inversiones = await InversionesService.obtenerTodas();
+    } catch (e) {
+      if (mounted) mostrarError(context, e, 'No pudimos cargar la información.');
+    }
+    if (mounted) setState(() => _cargando = false);
   }
 
   Future<void> _abrirFormulario({Inversion? existente}) async {
@@ -135,16 +139,28 @@ class _InversionesScreenState extends State<InversionesScreen> {
     );
   }
 
+
+  Future<void> _eliminar(Inversion item) async {
+    final i = _inversiones.indexOf(item);
+    setState(() => _inversiones.remove(item));
+    try {
+      await InversionesService.eliminar(item.id!);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _inversiones.insert(i.clamp(0, _inversiones.length), item));
+      mostrarError(context, e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final formato = NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0);
+    final formato = NumberFormat('\$#,##0', 'es_CO');
     final totalInvertido = _inversiones.fold(0.0, (s, i) => s + i.montoInvertido);
     final totalActual = _inversiones.fold(0.0, (s, i) => s + i.valorActual);
     final rentabilidadTotal = totalActual - totalInvertido;
 
     return Scaffold(
       appBar: AppBar(title: const Text('Inversiones')),
-      drawer: AppDrawer(actual: DrawerRuta.inversiones),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.copper,
         onPressed: () => _abrirFormulario(),
@@ -184,7 +200,7 @@ class _InversionesScreenState extends State<InversionesScreen> {
                                 '${rentabilidadTotal >= 0 ? '+' : ''}${formato.format(rentabilidadTotal)}',
                                 style: AppText.bodyStrong.copyWith(
                                   fontSize: 16,
-                                  color: rentabilidadTotal >= 0 ? AppColors.copper : Colors.redAccent,
+                                  color: rentabilidadTotal >= 0 ? AppColors.copper : AppColors.ember,
                                 ),
                               ),
                             ],
@@ -199,9 +215,10 @@ class _InversionesScreenState extends State<InversionesScreen> {
                       background: Container(
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.only(right: 20),
-                        child: const Icon(Icons.delete, color: Colors.redAccent),
+                        child: const Icon(Icons.delete_outline, color: AppColors.ember),
                       ),
-                      onDismissed: (_) => InversionesService.eliminar(i.id!),
+                      confirmDismiss: (_) => confirmarEliminar(context, 'esta inversión'),
+                      onDismissed: (_) => _eliminar(i),
                       child: InkWell(
                         onTap: () => _abrirFormulario(existente: i),
                         borderRadius: BorderRadius.circular(10),
@@ -240,7 +257,7 @@ class _InversionesScreenState extends State<InversionesScreen> {
                                 '${i.rentabilidad >= 0 ? '+' : ''}${formato.format(i.rentabilidad)} '
                                 '(${i.rentabilidadPct >= 0 ? '+' : ''}${i.rentabilidadPct.toStringAsFixed(1)}%)',
                                 style: AppText.caption.copyWith(
-                                  color: i.rentabilidad >= 0 ? AppColors.copper : Colors.redAccent,
+                                  color: i.rentabilidad >= 0 ? AppColors.copper : AppColors.ember,
                                 ),
                               ),
                             ],

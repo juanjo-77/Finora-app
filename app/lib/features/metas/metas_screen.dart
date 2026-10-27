@@ -3,7 +3,8 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/utils/currency_input_formatter.dart';
-import '../../core/widgets/app_drawer.dart';
+import '../../core/utils/feedback.dart';
+import '../../core/widgets/grabado.dart';
 import 'meta.dart';
 import 'metas_service.dart';
 
@@ -25,8 +26,12 @@ class _MetasScreenState extends State<MetasScreen> {
 
   Future<void> _cargar() async {
     setState(() => _cargando = true);
-    _metas = await MetasService.obtenerTodas();
-    setState(() => _cargando = false);
+    try {
+      _metas = await MetasService.obtenerTodas();
+    } catch (e) {
+      if (mounted) mostrarError(context, e, 'No pudimos cargar la información.');
+    }
+    if (mounted) setState(() => _cargando = false);
   }
 
   Future<void> _abrirFormulario({Meta? existente}) async {
@@ -140,24 +145,41 @@ class _MetasScreenState extends State<MetasScreen> {
     );
   }
 
+
+  Future<void> _eliminar(Meta item) async {
+    final i = _metas.indexOf(item);
+    setState(() => _metas.remove(item));
+    try {
+      await MetasService.eliminar(item.id!);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _metas.insert(i.clamp(0, _metas.length), item));
+      mostrarError(context, e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final formato = NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0);
+    final formato = NumberFormat('\$#,##0', 'es_CO');
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Metas financieras')),
-      drawer: AppDrawer(actual: DrawerRuta.metas),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.copper,
-        onPressed: () => _abrirFormulario(),
-        child: const Icon(Icons.add, color: Colors.black),
+      appBar: AppBar(
+        title: const Text('Metas financieras'),
+        actions: [
+          TextButton.icon(
+            onPressed: () => _abrirFormulario(),
+            icon: const LineIcon(Trazo.mas, size: 18, color: AppColors.gold),
+            label: const Text('Nueva meta'),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: _cargando
           ? const Center(child: CircularProgressIndicator())
           : _metas.isEmpty
-              ? Center(child: Text('Aún no tienes metas definidas', style: AppText.body))
+              ? Center(child: Text('Aún no tienes metas.\nCrea la primera con Nueva meta.', style: AppText.body, textAlign: TextAlign.center))
               : ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).padding.bottom + 20),
                   itemCount: _metas.length,
                   itemBuilder: (ctx, i) {
                     final m = _metas[i];
@@ -169,9 +191,10 @@ class _MetasScreenState extends State<MetasScreen> {
                       background: Container(
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.only(right: 20),
-                        child: const Icon(Icons.delete, color: Colors.redAccent),
+                        child: const Icon(Icons.delete_outline, color: AppColors.ember),
                       ),
-                      onDismissed: (_) => MetasService.eliminar(m.id!),
+                      confirmDismiss: (_) => confirmarEliminar(context, 'esta meta'),
+                      onDismissed: (_) => _eliminar(m),
                       child: InkWell(
                         onTap: () => _abrirFormulario(existente: m),
                         borderRadius: BorderRadius.circular(12),

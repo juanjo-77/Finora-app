@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/utils/currency_input_formatter.dart';
-import '../../core/widgets/app_drawer.dart';
+import '../../core/utils/feedback.dart';
 import '../movimientos/movimiento.dart';
 import '../movimientos/movimientos_service.dart';
 import 'presupuesto.dart';
@@ -28,13 +28,17 @@ class _PresupuestosScreenState extends State<PresupuestosScreen> {
 
   Future<void> _cargar() async {
     setState(() => _cargando = true);
-    final resultados = await Future.wait([
-      PresupuestosService.obtenerTodos(),
-      MovimientosService.obtenerTodos(),
-    ]);
-    _presupuestos = resultados[0] as List<Presupuesto>;
-    _movimientos = resultados[1] as List<Movimiento>;
-    setState(() => _cargando = false);
+    try {
+      final resultados = await Future.wait([
+        PresupuestosService.obtenerTodos(),
+        MovimientosService.obtenerTodos(),
+      ]);
+      _presupuestos = resultados[0] as List<Presupuesto>;
+      _movimientos = resultados[1] as List<Movimiento>;
+    } catch (e) {
+      if (mounted) mostrarError(context, e, 'No pudimos cargar la información.');
+    }
+    if (mounted) setState(() => _cargando = false);
   }
 
   double _gastadoEnCategoria(String categoria) {
@@ -118,13 +122,25 @@ class _PresupuestosScreenState extends State<PresupuestosScreen> {
     );
   }
 
+
+  Future<void> _eliminar(Presupuesto item) async {
+    final i = _presupuestos.indexOf(item);
+    setState(() => _presupuestos.remove(item));
+    try {
+      await PresupuestosService.eliminar(item.id!);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _presupuestos.insert(i.clamp(0, _presupuestos.length), item));
+      mostrarError(context, e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final formato = NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0);
+    final formato = NumberFormat('\$#,##0', 'es_CO');
 
     return Scaffold(
       appBar: AppBar(title: const Text('Presupuestos')),
-      drawer: AppDrawer(actual: DrawerRuta.presupuestos),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.copper,
         onPressed: _abrirFormulario,
@@ -135,7 +151,7 @@ class _PresupuestosScreenState extends State<PresupuestosScreen> {
           : _presupuestos.isEmpty
               ? Center(child: Text('Aún no tienes presupuestos definidos', style: AppText.body))
               : ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 140),
                   itemCount: _presupuestos.length,
                   itemBuilder: (ctx, i) {
                     final p = _presupuestos[i];
@@ -143,7 +159,7 @@ class _PresupuestosScreenState extends State<PresupuestosScreen> {
                     final pct = p.limiteMensual > 0 ? gastado / p.limiteMensual : 0.0;
                     final excedido = pct > 1.0;
                     final color = excedido
-                        ? Colors.redAccent
+                        ? AppColors.ember
                         : (pct > 0.8 ? AppColors.copper : AppColors.bone);
 
                     return Dismissible(
@@ -152,9 +168,10 @@ class _PresupuestosScreenState extends State<PresupuestosScreen> {
                       background: Container(
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.only(right: 20),
-                        child: const Icon(Icons.delete, color: Colors.redAccent),
+                        child: const Icon(Icons.delete_outline, color: AppColors.ember),
                       ),
-                      onDismissed: (_) => PresupuestosService.eliminar(p.id!),
+                      confirmDismiss: (_) => confirmarEliminar(context, 'este presupuesto'),
+                      onDismissed: (_) => _eliminar(p),
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.all(16),
@@ -194,7 +211,7 @@ class _PresupuestosScreenState extends State<PresupuestosScreen> {
                               const SizedBox(height: 8),
                               Text(
                                 'Te pasaste ${formato.format(gastado - p.limiteMensual)} del límite',
-                                style: AppText.caption.copyWith(color: Colors.redAccent),
+                                style: AppText.caption.copyWith(color: AppColors.ember),
                               ),
                             ],
                           ],

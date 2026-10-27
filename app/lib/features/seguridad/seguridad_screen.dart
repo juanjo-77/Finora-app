@@ -3,7 +3,6 @@ import '../../core/security/biometric_service.dart';
 import '../../core/security/pin_service.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
-import '../../core/widgets/app_drawer.dart';
 import 'set_pin_screen.dart';
 
 class SeguridadScreen extends StatefulWidget {
@@ -67,7 +66,6 @@ class _SeguridadScreenState extends State<SeguridadScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Seguridad')),
-      drawer: AppDrawer(actual: DrawerRuta.seguridad),
       body: _cargando
           ? const Center(child: CircularProgressIndicator())
           : ListView(

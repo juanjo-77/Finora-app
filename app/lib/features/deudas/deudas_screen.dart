@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/theme/app_text_styles.dart';
 import '../../core/utils/currency_input_formatter.dart';
-import '../../core/widgets/app_drawer.dart';
+import '../../core/utils/feedback.dart';
 import 'deuda.dart';
 import 'deudas_service.dart';
 
@@ -25,8 +25,12 @@ class _DeudasScreenState extends State<DeudasScreen> {
 
   Future<void> _cargar() async {
     setState(() => _cargando = true);
-    _deudas = await DeudasService.obtenerTodas();
-    setState(() => _cargando = false);
+    try {
+      _deudas = await DeudasService.obtenerTodas();
+    } catch (e) {
+      if (mounted) mostrarError(context, e, 'No pudimos cargar la información.');
+    }
+    if (mounted) setState(() => _cargando = false);
   }
 
   Future<void> _abrirFormulario({Deuda? existente}) async {
@@ -164,7 +168,7 @@ class _DeudasScreenState extends State<DeudasScreen> {
             Text('Abonar a ${d.nombre}', style: AppText.subheading),
             const SizedBox(height: 4),
             Text(
-              'Saldo actual: ${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(d.montoTotal)}',
+              'Saldo actual: ${NumberFormat('\$#,##0', 'es_CO').format(d.montoTotal)}',
               style: AppText.caption,
             ),
             const SizedBox(height: 16),
@@ -192,7 +196,7 @@ class _DeudasScreenState extends State<DeudasScreen> {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(
                         'El abono no puede superar el saldo pendiente '
-                        '(${NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0).format(d.montoTotal)})',
+                        '(${NumberFormat('\$#,##0', 'es_CO').format(d.montoTotal)})',
                       )),
                     );
                     return;
@@ -221,13 +225,25 @@ class _DeudasScreenState extends State<DeudasScreen> {
     );
   }
 
+
+  Future<void> _eliminar(Deuda item) async {
+    final i = _deudas.indexOf(item);
+    setState(() => _deudas.remove(item));
+    try {
+      await DeudasService.eliminar(item.id!);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _deudas.insert(i.clamp(0, _deudas.length), item));
+      mostrarError(context, e);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final formato = NumberFormat.currency(locale: 'es_CO', symbol: '\$', decimalDigits: 0);
+    final formato = NumberFormat('\$#,##0', 'es_CO');
 
     return Scaffold(
       appBar: AppBar(title: const Text('Deudas y pagos')),
-      drawer: AppDrawer(actual: DrawerRuta.deudas),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.copper,
         onPressed: () => _abrirFormulario(),
@@ -238,7 +254,7 @@ class _DeudasScreenState extends State<DeudasScreen> {
           : _deudas.isEmpty
               ? Center(child: Text('No tienes deudas o pagos pendientes registrados', style: AppText.body))
               : ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 140),
                   itemCount: _deudas.length,
                   itemBuilder: (ctx, i) {
                     final d = _deudas[i];
@@ -248,9 +264,10 @@ class _DeudasScreenState extends State<DeudasScreen> {
                       background: Container(
                         alignment: Alignment.centerRight,
                         padding: const EdgeInsets.only(right: 20),
-                        child: const Icon(Icons.delete, color: Colors.redAccent),
+                        child: const Icon(Icons.delete_outline, color: AppColors.ember),
                       ),
-                      onDismissed: (_) => DeudasService.eliminar(d.id!),
+                      confirmDismiss: (_) => confirmarEliminar(context, 'esta deuda'),
+                      onDismissed: (_) => _eliminar(d),
                       child: Container(
                         margin: const EdgeInsets.only(bottom: 8),
                         padding: const EdgeInsets.all(14),

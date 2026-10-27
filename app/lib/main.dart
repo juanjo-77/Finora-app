@@ -6,7 +6,7 @@ import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_controller.dart';
 import 'features/auth/login_screen.dart';
-import 'features/dashboard/dashboard_screen.dart';
+import 'features/shell/main_shell.dart';
 import 'features/seguridad/lock_screen.dart';
 
 void main() async {
@@ -98,6 +98,6 @@ class _AppEntryState extends State<AppEntry> with WidgetsBindingObserver {
     if (_bloqueado) {
       return LockScreen(onUnlocked: _desbloquear);
     }
-    return _autenticado ? const DashboardScreen() : const LoginScreen();
+    return _autenticado ? const MainShell() : const LoginScreen();
   }
 }
